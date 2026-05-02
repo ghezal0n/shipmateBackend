@@ -31,12 +31,17 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
-        String token = jwtService.generateToken(request.getEmail());
-        return new AuthResponse(token);
+        // ── NEW: include role in generated token ──────────────────
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        String token = jwtService.generateToken(request.getEmail(), user.getRole());
+        // ─────────────────────────────────────────────────────────
+
+        return new AuthResponse(token, user.getRole());
     }
 
     public User register(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // role defaults to "USER" (set in User entity field initializer)
         return userRepository.save(user);
     }
 

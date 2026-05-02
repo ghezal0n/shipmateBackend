@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Map;
 import java.util.function.Function;
 
 @Service
@@ -21,7 +22,7 @@ public class JwtService {
 
     private SecretKey secretKey;
 
-    private static final int EXPIRATION_TIME = 86400000; // 24 heures
+    private static final int EXPIRATION_TIME = 86400000; // 24h
 
     @PostConstruct
     public void init() {
@@ -38,9 +39,16 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
+    // ── OLD: generateToken(String email) — kept for compatibility ──
     public String generateToken(String email) {
+        return generateToken(email, "USER"); // default role
+    }
+
+    // ── NEW: generateToken with role claim ─────────────────────────
+    public String generateToken(String email, String role) {
         return Jwts.builder()
                 .setSubject(email)
+                .addClaims(Map.of("role", role))   // ← role added to JWT payload
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(secretKey, SignatureAlgorithm.HS256)
